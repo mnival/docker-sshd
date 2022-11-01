@@ -44,12 +44,15 @@ jobs:
           method: jwt
           secrets: |
             kv/data/GitHub/default/quay.io username | QUAYIO_USERNAME ;
-            kv/data/GitHub/default/quay.io password | QUAYIO_PASSWORD
+            kv/data/GitHub/default/quay.io password | QUAYIO_PASSWORD ;
+            kv/data/GitHub/default/quay.io $.$ | QUAYIO_ALL ;
+
 
       - name: Find an open port.
         run: |
           env
           echo "${{ steps.vault.outputs.QUAYIO_USERNAME }} - ${{ steps.vault.outputs.QUAYIO_PASSWORD }}"
+          echo "${{ steps.vault.outputs.QUAYIO_ALL }} | jq -r .
           CLIENT_PORT=$(cat /dev/urandom | od -N2 -An -i | awk -v f=10000 -v r=19999 '{printf "%i\n", f + r * $1 / 65536}')
           [ $(netstat -an | grep LISTEN | grep :$CLIENT_PORT | wc -l) -eq 0 ] || { ./$0 && exit 0 || exit 1; }
           echo "CLIENT_PORT=$CLIENT_PORT" >> $GITHUB_ENV
@@ -77,6 +80,13 @@ jobs:
         with:
           image-ref: ${{ github.repository }}:${{ github.run_id }}
           exit-code: '1'
+
+      - name: Revoke token
+        # This step always runs at the end regardless of the previous steps result
+        if: always()
+        run: |
+          curl -X POST -sv -H "X-Vault-Token: ${{ env.VAULT_TOKEN }}" \
+            ${{ secrets.VAULT_URL }}/v1/auth/token/revoke-self
 
   deploy:
     if: ${{ github.ref == 'refs/heads/stable' }}
