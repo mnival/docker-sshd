@@ -52,11 +52,9 @@ jobs:
 
       - name: Find an open port.
         run: |
-          env
-          echo "${{ env.QUAYIO_ALL.username }} - ${{ env.QUAYIO_ALL.USERNAME }}"
+          # https://superuser.com/questions/885414/linux-command-get-unused-port
+          CLIENT_PORT="$(python -c "import socket; s = socket.socket(); s.bind(('', 0));print(s.getsockname()[1]);s.close()")"
           echo '${{ steps.vault.outputs.QUAYIO_ALL }}' | jq -r .
-          CLIENT_PORT=$(cat /dev/urandom | od -N2 -An -i | awk -v f=10000 -v r=19999 '{printf "%i\n", f + r * $1 / 65536}')
-          [ $(netstat -an | grep LISTEN | grep :$CLIENT_PORT | wc -l) -eq 0 ] || { ./$0 && exit 0 || exit 1; }
           echo "CLIENT_PORT=$CLIENT_PORT" >> $GITHUB_ENV
 
       - name: Build docker image.
@@ -64,7 +62,7 @@ jobs:
 
       - name: Run a container of created image.
         run: |
-          DOCKERCONTAINER=$(docker run -d -p 127.0.0.1:${CLIENT_PORT}:21 -e SSH_USERS="test:1000:1000" ${GITHUB_REPOSITORY}:${GITHUB_RUN_ID})
+          DOCKERCONTAINER=$(docker run -d -p 127.0.0.1:${CLIENT_PORT}:22 -e SSH_USERS="test:1000:1000" ${GITHUB_REPOSITORY}:${GITHUB_RUN_ID})
           sleep 5
           echo "DOCKERCONTAINER=$DOCKERCONTAINER" >> $GITHUB_ENV
 
@@ -72,7 +70,7 @@ jobs:
         run: docker ps -f id=${DOCKERCONTAINER}
 
       - name: Check if the port is responding.
-        run: nc 127.0.0.1 ${CLIENT_PORT} < /dev/null
+        run: printf "QUIT\n" | curl --fail -s telnet://127.0.0.1:${CLIENT_PORT} | egrep SSH
 
       - name: Check if the container is correctly stopped and removed.
         run: docker stop ${DOCKERCONTAINER} && docker rm -fv ${DOCKERCONTAINER}
@@ -87,7 +85,7 @@ jobs:
         # This step always runs at the end regardless of the previous steps result
         if: always()
         run: |
-          curl -X POST -s -H "X-Vault-Token: ${{ env.VAULT_TOKEN }}" \
+          curl --fail -X POST -s -H "X-Vault-Token: ${{ env.VAULT_TOKEN }}" --write-out "%{http_code}" \
             ${{ secrets.VAULT_URL }}/v1/auth/token/revoke-self
 
   deploy:
