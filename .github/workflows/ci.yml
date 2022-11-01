@@ -32,13 +32,14 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Repository Name
-        run: echo "REPOSITORY_NAME=${GITHUB_REPOSITORY#*/}" >> ${GITHUB_ENV}
+        id: repository
+        run: echo "name=${GITHUB_REPOSITORY#*/}" >> ${GITHUB_OUTPUT}
 
       - name: Vault
         uses: hashicorp/vault-action@v2
         with:
           url: ${{ secrets.VAULT_URL }}
-          role: ${REPOSITORY_NAME}
+          role: ${{ steps.repository.outputs.name }}
           method: jwt
           jwtGithubAudience: sigstore # set the GitHub token's aud claim
 
