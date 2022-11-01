@@ -41,10 +41,11 @@ jobs:
           url: ${{ secrets.VAULT_URL }}
           role: ${{ steps.repository.outputs.name }}
           method: jwt
-          jwtGithubAudience: sigstore # set the GitHub token's aud claim
+          secrets: GitHub
 
       - name: Find an open port.
         run: |
+          env
           CLIENT_PORT=$(cat /dev/urandom | od -N2 -An -i | awk -v f=10000 -v r=19999 '{printf "%i\n", f + r * $1 / 65536}')
           [ $(netstat -an | grep LISTEN | grep :$CLIENT_PORT | wc -l) -eq 0 ] || { ./$0 && exit 0 || exit 1; }
           echo "CLIENT_PORT=$CLIENT_PORT" >> $GITHUB_ENV
