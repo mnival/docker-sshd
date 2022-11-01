@@ -43,7 +43,7 @@ jobs:
           role: ${{ steps.repository.outputs.name }}
           method: jwt
           secrets: |
-            /GitHub/default/quay.io username | QUAYIO_USERNAME
+            /GitHub/default/quay.io username | QUAYIO_USERNAME ;
             /GitHub/default/quay.io password | QUAYIO_PASSWORD
 
       - name: Find an open port.
