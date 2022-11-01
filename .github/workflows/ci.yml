@@ -50,17 +50,10 @@ jobs:
         run: |
           env
           echo "${{ env.QUAYIO_ALL.username }} - ${{ env.QUAYIO_ALL.USERNAME }}"
-          echo "${{ steps.vault.outputs.QUAYIO_ALL }}"
+          echo '${{ steps.vault.outputs.QUAYIO_ALL }}' | jq -r .
           CLIENT_PORT=$(cat /dev/urandom | od -N2 -An -i | awk -v f=10000 -v r=19999 '{printf "%i\n", f + r * $1 / 65536}')
           [ $(netstat -an | grep LISTEN | grep :$CLIENT_PORT | wc -l) -eq 0 ] || { ./$0 && exit 0 || exit 1; }
           echo "CLIENT_PORT=$CLIENT_PORT" >> $GITHUB_ENV
-
-      - name: runner connexion
-        uses: mnival/sshd-action@main
-        with:
-          ssh_host: ${{ secrets.SSH_HOST }}
-          ssh_user: ${{ secrets.SSH_USER }}
-          ssh_key: ${{ secrets.SSH_KEY }}
 
       - name: Build docker image.
         run: docker build --no-cache --tag ${GITHUB_REPOSITORY}:${GITHUB_RUN_ID} .
