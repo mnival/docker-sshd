@@ -44,7 +44,7 @@ jobs:
           method: jwt
           exportToken: true
           secrets: |
-            kv/data/GitHub/default/quay.io $.$ | QUAYIO_ALL
+            kv/data/GitHub $.$ | QUAYIO_ALL
 
       - name: Add mask
         run: |
