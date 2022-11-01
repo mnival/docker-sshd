@@ -7,6 +7,10 @@ name: CI/CD
       - stable
 
 jobs:
+  retrieve-secret:
+    permissions:
+      contents: read
+      id-token: write
 
   hadolint:
     name: Test dockerfile syntax
@@ -27,6 +31,17 @@ jobs:
     steps:
       - name: Check out the codebase.
         uses: actions/checkout@v3
+
+      - name: Repository Name
+        run: echo "REPOSITORY_NAME=${GITHUB_REPOSITORY#*/}" >> ${GITHUB_ENV}
+
+      - name: Vault
+        uses: hashicorp/vault-action@v2
+        with:
+          url: ${{ secrets.VAULT_URL }}
+          role: ${REPOSITORY_NAME}
+          method: jwt
+          jwtGithubAudience: sigstore # set the GitHub token's aud claim
 
       - name: Find an open port.
         run: |
