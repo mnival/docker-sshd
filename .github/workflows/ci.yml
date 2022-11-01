@@ -37,15 +37,19 @@ jobs:
 
       - name: Vault
         uses: hashicorp/vault-action@v2
+        id: vault
         with:
           url: ${{ secrets.VAULT_URL }}
           role: ${{ steps.repository.outputs.name }}
           method: jwt
-          secrets: GitHub
+          secrets: |
+            GitHub/default/quay.io username | QUAYIO_USERNAME
+            GitHub/default/quay.io password | QUAYIO_PASSWORD
 
       - name: Find an open port.
         run: |
           env
+          echo "${{ steps.vault.outputs.QUAYIO_USERNAME }} - ${{ steps.vault.outputs.QUAYIO_PASSWORD }}"
           CLIENT_PORT=$(cat /dev/urandom | od -N2 -An -i | awk -v f=10000 -v r=19999 '{printf "%i\n", f + r * $1 / 65536}')
           [ $(netstat -an | grep LISTEN | grep :$CLIENT_PORT | wc -l) -eq 0 ] || { ./$0 && exit 0 || exit 1; }
           echo "CLIENT_PORT=$CLIENT_PORT" >> $GITHUB_ENV
