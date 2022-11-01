@@ -45,6 +45,9 @@ jobs:
           secrets: |
             kv/data/GitHub/default/quay.io $.$ | QUAYIO_ALL
 
+      - name: Add mask
+        run: |
+          python .github/scripts/add-mask.py '${{ steps.vault.outputs.QUAYIO_ALL }}'
 
       - name: Find an open port.
         run: |
