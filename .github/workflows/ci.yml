@@ -42,6 +42,7 @@ jobs:
           url: ${{ secrets.VAULT_URL }}
           role: ${{ steps.repository.outputs.name }}
           method: jwt
+          exportToken: true
           secrets: |
             kv/data/GitHub/default/quay.io $.$ | QUAYIO_ALL
 
@@ -86,7 +87,7 @@ jobs:
         # This step always runs at the end regardless of the previous steps result
         if: always()
         run: |
-          curl -X POST -sv -H "X-Vault-Token: ${{ env.VAULT_TOKEN }}" \
+          curl -X POST -s -H "X-Vault-Token: ${{ env.VAULT_TOKEN }}" \
             ${{ secrets.VAULT_URL }}/v1/auth/token/revoke-self
 
   deploy:
